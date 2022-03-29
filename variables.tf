@@ -76,12 +76,10 @@ variable "application_port2" {
 }
 variable "admin_user" {
    description = "User name to use as the admin account on the VMs that will be part of the VM Scale Set"
-   default     = "rootAdmin"
 }
 
 variable "admin_password" {
    description = "Default password for admin account"
-   default     = "rootAdminZubur123!"
    }
 
 variable vmss_instance_number{
