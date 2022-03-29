@@ -35,11 +35,7 @@ locals {
   zones = contains(local.regions_with_availability_zones, var.location) ? list("1","2","3") : null
 }
 
-/*
-output "zones" {
-  value = local.zones
-}
-*/
+
 
 variable "azurerm_virtual_network" {
  description = "The name of the virtual network in which the resources will be created"
@@ -61,19 +57,16 @@ variable "availability_zone_names" {
 
 
 
-
-
-
-variable "application_port" {
-   description = "The port that you want to expose to the external load balancer"
-   default     = 8080
-}
+#variable "application_port" {
+#   description = "The port that you want to expose to the external load balancer"
+ #  default     = 8080
+#}
 
 ##idan
-variable "application_port2" {
-   description = "The port that you want to expose to the external load balancer"
-   default     = 22
-}
+#variable "application_port2" {
+ #  description = "The port that you want to expose to the external load balancer"
+  # default     = 22
+#}
 variable "admin_user" {
    description = "User name to use as the admin account on the VMs that will be part of the VM Scale Set"
 }
