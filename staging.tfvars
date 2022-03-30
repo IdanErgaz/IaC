@@ -13,3 +13,4 @@ admin_password= "rootAdminZubur123!"
 #    environment = "${terraform.workspace}"
 #    }
 vmss_instance_number =3
+linux_virtual_machine_name="controllerVM"

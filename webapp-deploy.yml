@@ -1,0 +1,86 @@
+- hosts: production
+  become: true
+  tasks:
+        
+    - name: Run the equivalent of "apt-get update" as a separate step
+      apt:
+      update_cache: yes  
+      
+
+    - name: Prepering the nodesusing multiple commands
+      shell: 'sudo apt update'
+      shell: 'curl -sL https://deb.nodesource.com/setup_14.x | sudo bash -'
+      shell: 'sudo apt -y install nodejs'
+
+
+    - name:  Clone the weighTracker app to all nodes
+      git:
+          repo:  https://github.com/oktadev/okta-nodejs-postgres-weight-tracker-example.git
+          dest: /home/rootAdmin/weightTracker
+          force: yes
+
+
+    - name: Change the working directory to weightTracker/ before executing the command
+      ansible.builtin.shell: npm init -y
+      become: true   # Ensure that the highest permissions are used on the remote host
+      args:
+        chdir: weightTracker
+
+
+    - name: Build App
+      shell: 'npm init -y'
+      shell: 'npm install @hapi/hapi@19 @hapi/bell@12 @hapi/boom@9 @hapi/cookie@11 @hapi/inert@6 @hapi/joi@17 @hapi/vision@6 dotenv@8 ejs@3 postgres@1'
+      shell: 'npm audit fix --force'
+      shell: 'npm install --save-dev nodemon@2'
+      shell: 'npm run initdb'
+      shell: 'npm run dev'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # - name: Install reqired packages
+    #     apt: name={{ item }} state=present
+    #     with_items:
+    #       - npm
+    #       - nodejs
+
+    # - name: npm install (manual)
+    #   npm:
+    #     path:"/home/rootAdmin/weightTracker"
+    #     executable: /usr/bin/npm
+
+
+    # - name: Build app
+    # command: npm run build
+    # args:
+    #   chdir: "{{ repo_path }}"
+    # - name: Run npm init command
+    #      ansible.builtin.shell: npm init -y
+    #         args: 
+    #          executable: /bin/bash # Run ls in the Bash shell
+    #      become: true   # Ensure that the highest permissions are used on the remote host
+
+
+#TODO1
+#need to add the command for nodejs installationon the machine
+# sudo apt update
+# curl -sL https://deb.nodesource.com/setup_14.x | sudo bash -
+# sudo apt -y install nodejs
+
+#TODO2:
+#need to run the following commands
+# npm init -y
+# npm install @hapi/hapi@19 @hapi/bell@12 @hapi/boom@9 @hapi/cookie@11 @hapi/inert@6 @hapi/joi@17 @hapi/vision@6 dotenv@8 ejs@3 postgres@1
+# npm audit fix --force
+# npm install --save-dev nodemon@24

@@ -3,7 +3,7 @@ provider "azurerm" {
   features {}
 }
 
-
+#Creating resource group
 resource "azurerm_resource_group" "vmss" {
  name     = var.resource_group_name 
  location = var.location
@@ -11,6 +11,7 @@ resource "azurerm_resource_group" "vmss" {
         environment = "${terraform.workspace}"
     }
 }
+# Generate random text for a unique domain name
 
 resource "random_string" "fqdn" {
  length  = 6
@@ -18,7 +19,7 @@ resource "random_string" "fqdn" {
  upper   = false
  number  = false
 }
-##Idan
+#creating network security group for public subnet
 
 resource "azurerm_network_security_group" "vmss" {
     name                = "${terraform.workspace}_nsg"
@@ -65,7 +66,7 @@ resource "azurerm_network_security_group" "vmss" {
 }
 
 
-#Idan
+# Connect the vmss-nsg to the public network interface
 resource "azurerm_subnet_network_security_group_association" "vmss" {
   subnet_id                 = azurerm_subnet.vmss.id
   network_security_group_id = azurerm_network_security_group.vmss.id
@@ -73,7 +74,7 @@ resource "azurerm_subnet_network_security_group_association" "vmss" {
 
 
 
-
+# Create virtual network
 resource "azurerm_virtual_network" "vmss" {
  name                = var.azurerm_virtual_network
  address_space       = ["10.0.0.0/16"]
@@ -83,21 +84,21 @@ resource "azurerm_virtual_network" "vmss" {
         environment = "${terraform.workspace}"
     }
 }
-
+#Configure the private subnet
 resource "azurerm_subnet" "vmss2" {
  name                 = "private"
  resource_group_name  = azurerm_resource_group.vmss.name
  virtual_network_name = azurerm_virtual_network.vmss.name
  address_prefixes       = ["10.0.2.0/24"]
 }
-#Idan
+#Configure the public subnet
 resource "azurerm_subnet" "vmss" {
  name                 = "public"
  resource_group_name  = azurerm_resource_group.vmss.name
  virtual_network_name = azurerm_virtual_network.vmss.name
  address_prefixes       = ["10.0.1.0/24"]
 }
-
+# Create public IPs
 resource "azurerm_public_ip" "vmss" {
  name                         = "vmss-public-ip"
  location                     = var.location
@@ -108,7 +109,7 @@ resource "azurerm_public_ip" "vmss" {
         environment = "${terraform.workspace}"
     }
 }
-
+#Creating loadbalancer with frontend ip
 resource "azurerm_lb" "vmss" {
  name                = "vmss-lb"
  location            = var.location
@@ -123,27 +124,26 @@ resource "azurerm_lb" "vmss" {
         environment = "${terraform.workspace}"
     }
 }
-
+#Creating lb backend pool
 resource "azurerm_lb_backend_address_pool" "bpepool" {
-#  resource_group_name = azurerm_resource_group.vmss.name
  loadbalancer_id     = azurerm_lb.vmss.id
  name                = "BackEndAddressPool"
 }
+#Creating lb prob for port 8080
 resource "azurerm_lb_probe" "vmss2" {
-#  resource_group_name = azurerm_resource_group.vmss.name
  loadbalancer_id     = azurerm_lb.vmss.id
  name                = "http-running-probe"
  port                = 8080
 }
+#Creating lb prob for port 22
 resource "azurerm_lb_probe" "vmss" {
 #  resource_group_name = azurerm_resource_group.vmss.name
  loadbalancer_id     = azurerm_lb.vmss.id
  name                = "ssh-running-probe"
  port                = 22
 }
-
+#Adding lb rules for ports 8080 and 22
 resource "azurerm_lb_rule" "httpRule" {
-  #  resource_group_name            = azurerm_resource_group.vmss.name
    loadbalancer_id                = azurerm_lb.vmss.id
    name                           = "http"
    protocol                       = "Tcp"
@@ -154,9 +154,7 @@ resource "azurerm_lb_rule" "httpRule" {
    probe_id                       = azurerm_lb_probe.vmss2.id
 }
 
-#Idan
 resource "azurerm_lb_rule" "sshRule" {
-  #  resource_group_name            = azurerm_resource_group.vmss.name
    loadbalancer_id                = azurerm_lb.vmss.id
    name                           = "ssh"
    protocol                       = "Tcp"
@@ -168,7 +166,7 @@ resource "azurerm_lb_rule" "sshRule" {
 }
 
 
-
+#Setup a virtual machine scale-set
 resource "azurerm_virtual_machine_scale_set" "vmss" {
  name                = var.azurerm_virtual_machine_scale_set
  location            = var.location
@@ -236,7 +234,7 @@ tags = {
 #     filename = "${path.module}/cloudinit.conf"
 # }
 
-
+#Setting azure monitor auto-scaling
 resource "azurerm_monitor_autoscale_setting" "vmss" {
   name                = "AutoscaleSetting"
   resource_group_name = azurerm_resource_group.vmss.name
@@ -312,7 +310,7 @@ resource "azurerm_monitor_autoscale_setting" "vmss" {
 
 
 
-
+#Adding azure postgresql as a service
 resource "azurerm_postgresql_server" "example" {
   name                = "pssql-${terraform.workspace}"
   location            = azurerm_resource_group.vmss.location
@@ -335,7 +333,7 @@ resource "azurerm_postgresql_server" "example" {
 }
 
 
-
+#Configure the postgres sql firewall rule- allow connection from the lb front ip
 resource "azurerm_postgresql_firewall_rule" "dbFWrule1" {
   name                = "postgres"
   resource_group_name = azurerm_resource_group.vmss.name
@@ -348,63 +346,59 @@ resource "azurerm_postgresql_firewall_rule" "dbFWrule1" {
 
 
 
+#Create network interfaces
+#create controller interface
+resource "azurerm_network_interface" "controller_nic" {
+  name                = "vnetController-${terraform.workspace}"
+  location            = azurerm_resource_group.vmss.location
+  resource_group_name = azurerm_resource_group.vmss.name
 
+  ip_configuration {
+    name                          = "myNicConfiguration"
+    subnet_id                     = azurerm_subnet.vmss.id
+    private_ip_address_allocation = "Dynamic"
+    # public_ip_address_id          = azurerm_public_ip.controller_nic.id
+  }
 
-# resource "azurerm_private_endpoint" "ep" {
-#   name                = "acctest-privatelink-test02"
-#   location            = azurerm_resource_group.vmss.location
-#   resource_group_name = azurerm_resource_group.vmss.name
-#   subnet_id           = azurerm_subnet.vmss2.id
+  tags = {
+        environment = "${terraform.workspace}"
+    }
+}
 
-#   private_service_connection {
-#     name                           = "acctest-privatelink-mssc-test02"
-#     private_connection_resource_id = azurerm_postgresql_server.example.id
-#     subresource_names              = ["postgresql"]
-#     is_manual_connection           = false
-#   }
-# }
+# Create webApp virtual machine Controler for ansible
+resource "azurerm_linux_virtual_machine" "controller" {
+  name                  = var.controller_linux_virtual_machine_name
+  location              = var.location
+  resource_group_name   = var.resource_group_name
+  network_interface_ids = [azurerm_network_interface.controller_nic.id]
+  size                  = "Standard_B1s" #change to B1s
+  admin_username = var.admin_user
+  admin_password = var.admin_password
+  computer_name         = "Controller-Server"
 
+  #Uncomment this line to delete the OS disk automatically when deleting the VM
+  #delete_os_disk_on_termination = true
 
+  # Uncomment this line to delete the data disks automatically when deleting the VM
+  # delete_data_disks_on_termination = true
+  disable_password_authentication = false
+  
+  os_disk {
+    name              = "webAppDisk1"
+    caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
 
+  source_image_reference {
+    offer                 = "0001-com-ubuntu-server-focal"
+    publisher             = "Canonical"
+    sku                   = "20_04-lts-gen2"
+    version   = "latest"
 
-  # start_ip_address    = "10.0.1.1"
-  # end_ip_address      = "10.0.1.10"
+  }
+  
 
-
-# resource "azurerm_private_dns_zone" "example" {
-#   name                = "my private_dns_zone"
-#   resource_group_name = azurerm_resource_group.vmss.name
-# }
-# resource "azurerm_postgresql_server" "pssql" {
-#   name                = "postgresql-server-2"
-#   location            = azurerm_resource_group.vmss.location
-#   resource_group_name = azurerm_resource_group.vmss.name
-
-#   sku_name = "B_Gen5_2"
-
-#   storage_mb                   = 5120
-#   backup_retention_days        = 7
-#   geo_redundant_backup_enabled = false
-#   auto_grow_enabled            = true
-
-#   administrator_login          = "psqladmin"
-#   administrator_login_password = "H@Sh1CoR3!"
-#   version                      = "11"
-#   ssl_enforcement_enabled      = false
-#   ssl_minimal_tls_version_enforced ="TLSEnforcementDisabled"
-# }
-
-# resource "azurerm_postgresql_configuration" "pssqlConf" {
-#   name                = "pssqlConf"
-#   resource_group_name = azurerm_resource_group.vmss.name
-#   server_name         = azurerm_postgresql_server.pssql.name
-#   value               = "on"
-# }
-# locals {
-#   infra_env=terraform.workspace
-# }
-
-# filter {
-#   name= "tag:Environment"
-#   value = [local.infra_env]
-# }
+  tags = {
+        environment = "${terraform.workspace}"
+    }
+}

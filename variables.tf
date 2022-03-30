@@ -19,7 +19,9 @@ variable "resource_group_name" {
  type = string
 }
 
-
+# variable "azurerm_network_interface"{
+#   description = "The network interface for the Controller machine"
+# }
 # variable "resource_group_names" {
 #   type    = map
 #   default = {
@@ -82,6 +84,13 @@ variable vmss_instance_number{
  locals {
   infra_env=terraform.workspace
  }
+
+  variable "controller_linux_virtual_machine_name"{
+    description ="The name of the linux virtual machine"
+    default = "controllerVM"
+  }
+
+
 # variable "infra_env" {
 #   default=terraform.workspace
 #   description = "The current terraform workspace that we are working in"

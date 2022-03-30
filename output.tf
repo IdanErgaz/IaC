@@ -13,3 +13,11 @@ output "current_workspace" {
 output "vmss_front_ip" {
 value = "${azurerm_public_ip.vmss.ip_address}"
 }
+
+# output "appgw_backend_address_pool_ids" {
+#   description = "List of backend address pool Ids."
+  # value =[azurerm_lb_backend_address_pool.bpepool.id]
+  # value =   data.azurerm_lb_backend_address_pool.vmss.backend_ip_configuration.*.id
+  # value       = azurerm_application_gateway.app_gateway.backend_address_pool.*.id
+# }
+

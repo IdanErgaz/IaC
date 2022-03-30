@@ -1,0 +1,3 @@
+[production]
+10.0.1.4 ansible_ssh_pass=rootAdminZubur123! ansible_ssh_user=rootAdmin
+10.0.1.6 ansible_ssh_pass=rootAdminZubur123! ansible_ssh_user=rootAdmin
